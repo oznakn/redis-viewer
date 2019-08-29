@@ -32,56 +32,62 @@ export default class Network {
   }
 
   static axiosResponseHandler(response) {
-    if (response.data.success !== true) {
-      return Promise.reject(new Error('failed'));
-    }
-
-    return response.data.value;
+    return response.data;
   }
 
   static getDBs() {
     return this.conn
       .get('/dbs')
-      .then(this.axiosResponseHandler)
-      .then((response) => {
-        const values = response.split('\r\n');
-
-        return values
-          .slice(1, values.length - 1)
-          .map((item) => {
-            const items = item.split(':');
-
-            const result = {
-              name: items[0],
-            };
-
-            items[1].split(',').forEach((kv) => {
-              const [k, v] = kv.split('=');
-
-              result[k] = v;
-            });
-
-            return result;
-          });
-      });
-  }
-
-  static createDBClient({ db }) {
-    return this.conn
-      .post(`/db/${db}`)
       .then(this.axiosResponseHandler);
   }
 
-  static fetchKeys({ search, cursor }) {
+  static fetchPage({ db, search, page }) {
     return this.conn
-      .get(`/scan?cursor=${encodeURIComponent(cursor)}&search=${encodeURIComponent(search)}`)
-      .then(this.axiosResponseHandler)
-      .then((response) => ({ cursor: Number(response[0]), keys: response[1] }));
+      .get(`/dbs/${encodeURIComponent(db)}/search/${encodeURIComponent(search)}?page=${encodeURIComponent(page)}`)
+      .then(this.axiosResponseHandler);
   }
 
-  static getKeyValue({ key }) {
+  static fetchPageWithHash({
+    db, search, page, hash,
+  }) {
     return this.conn
-      .get(`/key/${encodeURIComponent(key)}`)
+      .get(`/dbs/${encodeURIComponent(db)}/hash/${encodeURIComponent(hash)}/search/${encodeURIComponent(search)}?page=${encodeURIComponent(page)}`)
+      .then(this.axiosResponseHandler);
+  }
+
+  static fetchCursor({ db, search, cursor }) {
+    return this.conn
+      .get(`/dbs/${encodeURIComponent(db)}/cursor/${encodeURIComponent(search)}/${encodeURIComponent(cursor)}`)
+      .then(this.axiosResponseHandler);
+  }
+
+  static fetchKeys({ db, search, cursor }) {
+    return this.conn
+      .get(`/dbs/${encodeURIComponent(db)}/scan/${encodeURIComponent(search)}/${encodeURIComponent(cursor)}`)
+      .then(this.axiosResponseHandler);
+  }
+
+  static deleteKey({ db, key }) {
+    return this.conn
+      .delete(`/dbs/${encodeURIComponent(db)}/keys/${encodeURIComponent(key)}`)
+      .then(this.axiosResponseHandler);
+  }
+
+  static setKey({ db, key, value }) {
+    return this.conn
+      .post(`/dbs/${encodeURIComponent(db)}/keys/${encodeURIComponent(key)}`, { value })
+      .then(this.axiosResponseHandler);
+  }
+
+  static getKey({ db, key }) {
+    return this.conn
+      .get(`/dbs/${encodeURIComponent(db)}/keys/${encodeURIComponent(key)}`)
+      .then(this.axiosResponseHandler);
+  }
+
+  static getKeyWithHash({ db, key, hash }) {
+    return this.conn
+      .get(`/dbs/${encodeURIComponent(db)}/hash/${encodeURIComponent(hash)}/keys/${encodeURIComponent(key)}`)
       .then(this.axiosResponseHandler);
   }
 }

@@ -4,13 +4,13 @@
       <h3>Settings</h3>
     </div>
 
-    <div style="margin-top: 20px;">
+    <div style="margin-top: 20px; max-width: 400px">
       <fish-form>
         <fish-fields>
           <fish-field
-            class="settings-field"
             label="ServerURL"
             name="serverURL"
+            style="width: 100%"
             :rules="[{ required: true, message: 'Server URL cannot be empty'}]">
             <fish-input v-model="serverURL"></fish-input>
           </fish-field>
@@ -18,8 +18,8 @@
 
         <fish-fields>
           <fish-field
-            class="settings-field"
             label="Username"
+            style="width: 100%"
             name="username">
             <fish-input v-model="username"></fish-input>
           </fish-field>
@@ -27,8 +27,8 @@
 
         <fish-fields>
           <fish-field
-            class="settings-field"
             label="Password"
+            style="width: 100%"
             name="password">
             <fish-input type="password" v-model="password"></fish-input>
           </fish-field>
@@ -65,9 +65,3 @@ export default {
   },
 };
 </script>
-
-<style lang="scss" scoped>
-  .settings-field {
-    width: 400px;
-  }
-</style>

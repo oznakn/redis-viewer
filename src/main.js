@@ -8,8 +8,12 @@ import network from './network';
 import router from './router';
 import store from './store';
 
+const options = {
+  thickness: '5px',
+};
+
 Vue.use(FishUI);
-Vue.use(VueProgressBar);
+Vue.use(VueProgressBar, options);
 
 Vue.config.productionTip = false;
 

@@ -7,8 +7,8 @@
       default-active="0"
       ref="menu">
 
-      <fish-option index="0" content="Ana Sayfa"></fish-option>
-      <fish-option index="1" content="Ayarlar"></fish-option>
+      <fish-option index="0" content="Main Page"></fish-option>
+      <fish-option index="1" content="Settings"></fish-option>
     </fish-menu>
   </div>
 </template>

@@ -1,71 +1,115 @@
 <template>
-  <div>
-    <div class="container-header">
+  <div style="margin-top: 25px;">
+    <div style="display: flex; flex-flow: row nowrap; align-items: center;">
+      <h2 style="margin: 15px 0; flex-grow: 1;">{{ db.name }}</h2>
+
+      <fish-switch
+        v-model="workMode"
+        :yesOrNo="['hash', 'key']">Hash Search Mode</fish-switch>
+    </div>
+
+    <div style="display: flex; flex-flow: row nowrap;">
       <fish-input
-        class="input"
+        v-show="workMode == 'hash'"
+        style="flex-grow: 1; margin-right: 5px;"
+        icon="fa fa-key"
+        size="medium"
+        v-model="hash" />
+
+      <fish-input
+        style="flex-grow: 1; margin-right: 5px;"
         icon="fa fa-search"
         size="medium"
         v-model="searchText" />
 
+      <fish-button style="margin: 0 8px" type="positive" @click="refreshData">
+        <i class="fa fa-sync"></i>
+      </fish-button>
+
       <fish-pagination
-        class="pagination"
-        :total="totalItem"
+        style="margin-left: 5px;"
+        :total="totalItemCount"
         :current="page"
         @change="onChange"
         simple />
     </div>
 
-    <div style="margin-top: 20px; display: flex; justify-content: flex-end;">
-      <fish-button type="positive" @click="refreshData"><i class="fa fa-sync"></i></fish-button>
+    <div>
+      <span>Total Item count: {{ db.keys }}</span>
     </div>
 
     <div style="margin-top: 20px;">
       <fish-table
         :columns="columns"
-        :data="searchResults" />
+        :data="results"
+        :loading="isLoading"
+        ref="table"
+        :expandedRowRender="(h, record) => {
+          if (record.type === 'hash') return undefined;
+
+          return h(TableExpandView, { props: { record, db, hash } })
+        }" />
     </div>
   </div>
 </template>
 
 <script>
 import { mapGetters } from 'vuex';
-import AppTableRow from './AppTableRow.vue';
+import TableRowOptions from './TableRowOptions.vue';
+import TableExpandView from './TableExpandView.vue';
 
 export default {
   props: ['db'],
   data() {
     return {
+      TableRowOptions,
+      TableExpandView,
+      workMode: 'key',
+      hash: '',
       searchText: '*',
       columns: [
         { title: 'Key', key: 'key' },
         {
           title: '',
-          render: (h, record) => h(AppTableRow, { props: { record } }),
+          render: (h, record) => h(TableRowOptions, {
+            props: { db: this.db, record },
+            on: { change: this.updateData },
+          }),
         },
       ],
       rowsPerPage: 10,
       page: 1,
-      hasMore: true,
-      maxPage: -1,
-      result: {
-        keys: [],
-        values: {},
-      },
+      results: [],
       cursors: [0],
+      isLoading: false,
     };
   },
   created() {
-    this.$network.createDBClient({ db: this.db })
-      .then(() => this.updateData());
+    this.updateData();
+  },
+  mounted() {
+    console.log(this.$refs.table);
   },
   watch: {
     searchText() {
       this.page = 1;
-      this.cursors = [0];
-      this.result.keys = [];
-      this.result.values = {};
 
+      this.resetData();
       this.updateData();
+    },
+    workMode() {
+      this.page = 1;
+
+      this.resetData();
+      this.updateData();
+    },
+    hash(value) {
+      if (value !== undefined && value.length !== 0) {
+        this.page = 1;
+
+        this.resetData();
+        this.updateData();
+      }
     },
   },
   methods: {
@@ -74,64 +118,64 @@ export default {
 
       this.updateData();
     },
+    resetData() {
+      this.cursors = [0];
+      this.results = [];
+    },
     refreshData() {
-      this.cursors.pop();
-      this.hasMore = true;
-      this.maxPage = -1;
+      this.resetData();
 
       this.updateData();
     },
     updateData() {
       if (this.isSettingsFilled && this.hasMore) {
-        this.fetchKeys()
+        this.isLoading = true;
+
+        this.fetchPage()
           .catch(() => {
             this.$message.error('Unkown error!');
+          })
+          .then(() => {
+            this.isLoading = false;
           });
       }
     },
-    fetchKeys() {
-      return this.$network.fetchKeys({ search: this.searchText, cursor: this.cursor })
-        .then(({ cursor, keys }) => {
-          this.result.keys = keys;
-          this.cursors.push(cursor);
+    fetchPage() {
+      if (this.workMode === 'hash') {
+        if (this.hash === undefined || this.hash.length === 0) return Promise.resolve(true);
 
-          this.result.values = {};
+        return this.$network
+          .fetchPageWithHash({
+            db: this.db.id, search: this.searchText, page: this.page, hash: this.hash,
+          }).then(({ results }) => {
+            this.results = results;
+          });
+      }
 
-          if (Number(cursor) === 0) {
-            this.hasMore = false;
-            this.maxPage = this.page;
-          }
+      return this.$network
+        .fetchPage({
+          db: this.db.id, search: this.searchText, page: this.page,
+        })
+        .then(({ results }) => {
+          this.results = results;
         });
     },
   },
   computed: {
     ...mapGetters(['isSettingsFilled']),
-    searchResults() {
-      return this.result.keys
-        .map((k) => ({ key: k }));
+    hasMore() {
+      return this.cursors.length === 1 || this.cursors[this.cursors.length - 1] !== 0;
     },
-    cursor() {
-      return this.cursors[this.page - 1];
-    },
-    totalItem() {
-      return this.hasMore ? this.rowsPerPage * (this.page + 1) : this.rowsPerPage * this.maxPage;
+    totalItemCount() {
+      return this.hasMore ? this.db.keys : this.rowsPerPage * (this.cursors.length - 1);
     },
   },
 };
 </script>
 
-<style lang="scss" scoped>
-  .container-header {
-    display: flex;
-    flex-flow: row nowrap;
-  }
-
-  .input {
-    flex-grow: 1;
-    margin-right: 5px;
-  }
-
-  .pagination {
-    margin-left: 5px;
+<style lang="scss">
+  .fish.pagination .item.total {
+    display: none;
+    visibility: hidden;
   }
 </style>
