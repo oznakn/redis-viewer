@@ -1,7 +1,7 @@
 <template>
   <div>
     <fish-menu
-      mode="inline"
+      mode="horizontal"
       size="large"
       @change="onChange"
       default-active="0"

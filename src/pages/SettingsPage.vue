@@ -18,15 +18,6 @@
 
         <fish-fields>
           <fish-field
-            label="Username"
-            style="width: 100%"
-            name="username">
-            <fish-input v-model="username"></fish-input>
-          </fish-field>
-        </fish-fields>
-
-        <fish-fields>
-          <fish-field
             label="Password"
             style="width: 100%"
             name="password">
@@ -47,16 +38,22 @@ export default {
   data() {
     return {
       serverURL: this.$store.state.settings.serverURL,
-      username: this.$store.state.settings.username,
       password: this.$store.state.settings.password,
     };
   },
   methods: {
     ...mapMutations(['saveSettings']),
     submit() {
+      if (this.serverURL.indexOf('http') !== 0) {
+        this.serverURL = `http://${this.serverURL}`;
+      }
+
+      if (this.serverURL.indexOf('/') !== this.serverURL.length - 1) {
+        this.serverURL += '/';
+      }
+
       this.saveSettings({
         serverURL: this.serverURL,
-        username: this.username,
         password: this.password,
       });
 

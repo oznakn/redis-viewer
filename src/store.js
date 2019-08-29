@@ -8,9 +8,9 @@ Vue.use(Vuex);
 
 export default new Vuex.Store({
   state: {
+    dbs: [],
     settings: {
       serverURL: '',
-      username: '',
       password: '',
     },
   },
@@ -20,12 +20,14 @@ export default new Vuex.Store({
     },
   },
   mutations: {
-    saveSettings(state, { serverURL, username, password }) {
+    saveSettings(state, { serverURL, password }) {
       state.settings.serverURL = serverURL;
-      state.settings.username = username;
       state.settings.password = password;
 
       network.update();
+    },
+    setDBs(state, dbs) {
+      state.dbs = dbs;
     },
   },
   plugins: [

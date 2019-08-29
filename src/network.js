@@ -4,14 +4,16 @@ export default class Network {
   static init($root) {
     this.$root = $root;
 
-    this.conn = axios.create({
-      baseURL: this.$root.$store.state.settings.serverURL,
-    });
-
-    this.connInit();
+    this.update();
   }
 
   static update() {
+  /*  const config = {};
+
+    if (this.$root.$store.state.settings.serverURL) {
+      config.baseURL = this.$root.$store.state.settings.serverURL;
+    }
+*/
     this.conn = axios.create({
       baseURL: this.$root.$store.state.settings.serverURL,
     });
@@ -38,6 +40,12 @@ export default class Network {
   static getDBs() {
     return this.conn
       .get('/dbs')
+      .then(this.axiosResponseHandler);
+  }
+
+  static fetchDBSize({ db }) {
+    return this.conn
+      .get(`/dbs/${encodeURIComponent(db)}/size`)
       .then(this.axiosResponseHandler);
   }
 
@@ -73,9 +81,23 @@ export default class Network {
       .then(this.axiosResponseHandler);
   }
 
+  static deleteKeyWithHash({ db, key, hash }) {
+    return this.conn
+      .delete(`/dbs/${encodeURIComponent(db)}/hash/${encodeURIComponent(hash)}/keys/${encodeURIComponent(key)}`)
+      .then(this.axiosResponseHandler);
+  }
+
   static setKey({ db, key, value }) {
     return this.conn
       .post(`/dbs/${encodeURIComponent(db)}/keys/${encodeURIComponent(key)}`, { value })
+      .then(this.axiosResponseHandler);
+  }
+
+  static setKeyWithHash({
+    db, key, hash, value,
+  }) {
+    return this.conn
+      .post(`/dbs/${encodeURIComponent(db)}/hash/${encodeURIComponent(hash)}/keys/${encodeURIComponent(key)}`, { value })
       .then(this.axiosResponseHandler);
   }
 

@@ -1,55 +1,34 @@
 <template>
   <div>
-    <!-- <div>
-      <fish-button type="positive" @click="updateDBs">
-        <i class="fa fa-sync"></i>
-      </fish-button>
-    </div> -->
-
-    <fish-tabs v-if="dbs.length > 0" :value="dbs[0]['name']">
-      <fish-tab-pane
-        v-for="db in dbs"
-        :label="db['name']"
-        :index="db['name']"
-        :key="db['id']">
-
-        <database-view :db="db"></database-view>
-      </fish-tab-pane>
-    </fish-tabs>
+    <database-view v-if="currentDB" :db="currentDB" :key="currentDB['id']"></database-view>
+    <hash-search-view />
   </div>
 </template>
 
 <script>
-import { mapGetters } from 'vuex';
 import DatabaseView from '../components/DatabaseView.vue';
+import HashSearchView from '../components/HashSearchView.vue';
 
 export default {
   components: {
     DatabaseView,
+    HashSearchView,
   },
   data() {
     return {
-      dbs: [],
+      currentDB: undefined,
     };
   },
   created() {
-    this.updateDBs();
+    this.$eventBus.$on('changeDBView', this.changeDBView);
+  },
+  beforeDestroy() {
+    this.$eventBus.$off('changeDBView', this.changeDBView);
   },
   methods: {
-    updateDBs() {
-      this.$network.getDBs()
-        .then((response) => {
-          this.dbs = response;
-        })
-        .catch(() => {
-          if (this.isSettingsFilled === true) {
-            this.$message.error('Unknown Error!');
-          }
-        });
+    changeDBView({ db }) {
+      this.currentDB = db;
     },
-  },
-  computed: {
-    ...mapGetters(['isSettignsFilled']),
   },
 };
 </script>

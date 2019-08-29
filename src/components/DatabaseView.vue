@@ -1,21 +1,12 @@
 <template>
-  <div style="margin-top: 25px;">
-    <div style="display: flex; flex-flow: row nowrap; align-items: center;">
-      <h2 style="margin: 15px 0; flex-grow: 1;">{{ db.name }}</h2>
+  <div>
+    <div style="margin: 15px 0;">
+      <h2>{{ db.name }}</h2>
 
-      <fish-switch
-        v-model="workMode"
-        :yesOrNo="['hash', 'key']">Hash Search Mode</fish-switch>
+      <h4 v-show="hash">Hash key: {{ hash }}</h4>
     </div>
 
     <div style="display: flex; flex-flow: row nowrap;">
-      <fish-input
-        v-show="workMode == 'hash'"
-        style="flex-grow: 1; margin-right: 5px;"
-        icon="fa fa-key"
-        size="medium"
-        v-model="hash" />
-
       <fish-input
         style="flex-grow: 1; margin-right: 5px;"
         icon="fa fa-search"
@@ -30,7 +21,7 @@
         style="margin-left: 5px;"
         :total="totalItemCount"
         :current="page"
-        @change="onChange"
+        @change="onPageChange"
         simple />
     </div>
 
@@ -59,21 +50,32 @@ import TableRowOptions from './TableRowOptions.vue';
 import TableExpandView from './TableExpandView.vue';
 
 export default {
-  props: ['db'],
+  props: {
+    db: {
+      type: Object,
+      required: true,
+    },
+    workMode: {
+      type: String,
+      default: 'key',
+    },
+    hash: {
+      type: String,
+      default: '',
+    },
+  },
   data() {
     return {
       TableRowOptions,
       TableExpandView,
-      workMode: 'key',
-      hash: '',
       searchText: '*',
       columns: [
         { title: 'Key', key: 'key' },
         {
           title: '',
           render: (h, record) => h(TableRowOptions, {
-            props: { db: this.db, record },
-            on: { change: this.updateData },
+            props: { db: this.db, record, hash: this.hash },
+            on: { change: this.onItemDelete },
           }),
         },
       ],
@@ -87,9 +89,6 @@ export default {
   created() {
     this.updateData();
   },
-  mounted() {
-    console.log(this.$refs.table);
-  },
   watch: {
     searchText() {
       this.page = 1;
@@ -97,26 +96,22 @@ export default {
       this.resetData();
       this.updateData();
     },
-    workMode() {
+    db() {
       this.page = 1;
 
       this.resetData();
       this.updateData();
     },
-    hash(value) {
-      if (value !== undefined && value.length !== 0) {
-        this.page = 1;
-
-        this.resetData();
-        this.updateData();
-      }
-    },
   },
   methods: {
-    onChange(page) {
+    onPageChange(page) {
       this.page = page;
 
       this.updateData();
+    },
+    onItemDelete() {
+      this.updateData();
+      this.updateDBInfo();
     },
     resetData() {
       this.cursors = [0];
@@ -126,6 +121,19 @@ export default {
       this.resetData();
 
       this.updateData();
+      this.updateDBInfo();
+    },
+    updateDBInfo() {
+      this.$network
+        .fetchDBSize({
+          db: this.db.id,
+        })
+        .then(({ size }) => {
+          this.db.keys = size;
+        })
+        .catch(() => {
+          this.$message.error('Unkown error!');
+        });
     },
     updateData() {
       if (this.isSettingsFilled && this.hasMore) {
