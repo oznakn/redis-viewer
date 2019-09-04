@@ -42,21 +42,12 @@ export default {
       this.$eventBus.$emit('openHashSearchView', { db: this.db, hash: this.record.key });
     },
     deleteKey() {
-      if (this.record.type === undefined) {
-        return this.$network
-          .deleteKeyWithHash({ db: this.db.id, key: this.record.key, hash: this.hash })
-          .then(() => {
-            this.$message.success('Success!');
-
-            this.$emit('change');
-          })
-          .catch(() => {
-            this.$message.error('Unkown error!');
-          });
-      }
-
       return this.$network
-        .deleteKey({ db: this.db.id, key: this.record.key })
+        .deleteKey({
+          db: this.db.id,
+          key: this.record.key,
+          hash: this.record.type === undefined ? this.hash : undefined,
+        })
         .then(() => {
           this.$message.success('Success!');
 

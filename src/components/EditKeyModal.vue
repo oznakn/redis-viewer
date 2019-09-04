@@ -36,59 +36,36 @@ export default {
       this.hash = hash;
       this.isModalVisible = true;
 
-      if (this.record.type === undefined) {
-        this.$network
-          .getKeyWithHash({
-            db: this.db.id,
-            key: this.record.key,
-            hash: this.hash,
-          })
-          .then(({ result }) => {
-            this.value = result;
-          })
-          .catch(() => {
-            this.$message.error('Unkown error!');
-          });
-      } else {
-        this.$network
-          .getKey({
-            db: this.db.id,
-            key: this.record.key,
-          })
-          .then(({ result }) => {
-            this.value = result;
-          })
-          .catch(() => {
-            this.$message.error('Unkown error!');
-          });
-      }
+
+      return this.$network
+        .getKey({
+          db: this.db.id,
+          key: this.record.key,
+          hash: this.record.type === undefined ? this.hash : undefined,
+        })
+        .then(({ result }) => {
+          this.value = result;
+        })
+        .catch(() => {
+          this.$message.error('Unkown error!');
+        });
     },
     save() {
-      if (this.record.type === undefined) {
-        this.$network
-          .setKeyWithHash({
-            db: this.db.id, key: this.record.key, value: this.value, hash: this.hash,
-          })
-          .then(() => {
-            this.isModalVisible = false;
+      return this.$network
+        .setKey({
+          db: this.db.id,
+          key: this.record.key,
+          value: this.value,
+          hash: this.record.type === undefined ? this.hash : undefined,
+        })
+        .then(() => {
+          this.isModalVisible = false;
 
-            this.$message.success('Success!');
-          })
-          .catch(() => {
-            this.$message.error('Unkown error!');
-          });
-      } else {
-        this.$network
-          .setKey({ db: this.db.id, key: this.record.key, value: this.value })
-          .then(() => {
-            this.isModalVisible = false;
-
-            this.$message.success('Success!');
-          })
-          .catch(() => {
-            this.$message.error('Unkown error!');
-          });
-      }
+          this.$message.success('Success!');
+        })
+        .catch(() => {
+          this.$message.error('Unkown error!');
+        });
     },
   },
 };

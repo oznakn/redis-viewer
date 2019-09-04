@@ -16,24 +16,24 @@ export default class Socket {
     if (this.conn === undefined && this.$root.$store.state.settings.serverURL) {
       this.conn = new WebSocket('ws://localhost:5000/ws');
 
-      this.conn.onclose = () => {
+      this.conn.onclose = this.conn.onerror = () => { // eslint-disable-line
         this.isConnected = false;
         this.emitSocketStatus();
-      };
 
-      this.conn.onerror = () => {
-        this.isConnected = false;
-        this.emitSocketStatus();
+        this.conn = undefined;
       };
 
       this.conn.onmessage = (e) => {
-        if (e.data === 'pong') {
+        const data = JSON.parse(e.data);
+
+        if (data.pong === true) {
           this.isConnected = true;
           this.emitSocketStatus();
         } else {
-          this.$eventBus.$emit('updateDatabase', { db: Number(e.data) });
+          this.$eventBus.$emit('updateDatabase', { db: data.db });
         }
       };
+
       this.conn.onopen = () => {
         this.conn.send('ping');
       };

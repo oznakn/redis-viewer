@@ -42,26 +42,13 @@ export default {
         });
     },
     fetchData() {
-      if (this.record.type === undefined) {
-        return this.$network
-          .getKeyWithHash({
-            db: this.db.id,
-            key: this.record.key,
-            hash: this.hash,
-          })
-          .then(({ result }) => {
-            this.value = result;
-          });
-      }
-
-      if (this.record.type === 'hash') {
-        return Promise.resolve('true');
-      }
+      if (this.record.type === 'hash') return Promise.resolve('true');
 
       return this.$network
         .getKey({
           db: this.db.id,
           key: this.record.key,
+          hash: this.record.type === undefined ? this.hash : undefined,
         })
         .then(({ result }) => {
           this.value = result;

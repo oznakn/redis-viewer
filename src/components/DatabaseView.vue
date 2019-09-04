@@ -85,7 +85,7 @@ export default {
       rowsPerPage: 10,
       page: 1,
       results: [],
-      cursors: [0],
+      hasMore: true,
       isLoading: false,
       fetchTime: undefined,
     };
@@ -128,7 +128,6 @@ export default {
       }
     },
     resetData() {
-      this.cursors = [0];
       this.results = [];
     },
     refreshData() {
@@ -163,35 +162,24 @@ export default {
       }
     },
     fetchPage() {
-      if (this.workMode === 'hash') {
-        if (this.hash === undefined || this.hash.length === 0) return Promise.resolve(true);
-
-        return this.$network
-          .fetchPageWithHash({
-            db: this.db.id, search: this.searchText, page: this.page, hash: this.hash,
-          }).then(({ results, time }) => {
-            this.fetchTime = time;
-            this.results = results;
-          });
-      }
+      if (this.workMode === 'hash' && (this.hash === undefined || this.hash.length === 0)) return Promise.resolve(true);
 
       return this.$network
         .fetchPage({
-          db: this.db.id, search: this.searchText, page: this.page,
+          db: this.db.id, search: this.searchText, page: this.page, hash: this.workMode === 'hash' ? this.hash : undefined,
         })
         .then(({ results, time }) => {
           this.fetchTime = time;
           this.results = results;
+
+          if (results.length === 0) this.hasMore = false;
         });
     },
   },
   computed: {
     ...mapGetters(['isSettingsFilled']),
-    hasMore() {
-      return this.cursors.length === 1 || this.cursors[this.cursors.length - 1] !== 0;
-    },
     totalItemCount() {
-      return this.hasMore ? this.db.keys : this.rowsPerPage * (this.cursors.length - 1);
+      return this.hasMore ? this.db.keys : this.rowsPerPage * (this.page - 1);
     },
   },
 };

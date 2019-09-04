@@ -11,7 +11,7 @@ export default class Network {
     this.conn = axios.create({
       baseURL: this.$root.$store.state.settings.serverURL,
       headers: {
-        Authentication: this.$root.$store.state.settings.password,
+        Authorization: this.$root.$store.state.settings.password,
       },
     });
 
@@ -42,77 +42,51 @@ export default class Network {
 
   static fetchDBSize({ db }) {
     return this.conn
-      .get(`/dbs/${encodeURIComponent(db)}/size`)
+      .get('/dbsize', {
+        params: { db },
+      })
       .then(this.axiosResponseHandler);
   }
 
-  static fetchPage({ db, search, page }) {
-    return this.conn
-      .get(`/dbs/${encodeURIComponent(db)}/search/${encodeURIComponent(search)}?page=${encodeURIComponent(page)}`)
-      .then(this.axiosResponseHandler);
-  }
-
-  static fetchPageWithHash({
+  static fetchPage({
     db, search, page, hash,
   }) {
     return this.conn
-      .get(`/dbs/${encodeURIComponent(db)}/hash/${encodeURIComponent(hash)}/search/${encodeURIComponent(search)}?page=${encodeURIComponent(page)}`)
+      .get('/search', {
+        params: {
+          db, search, page, hash,
+        },
+      })
       .then(this.axiosResponseHandler);
   }
 
-  static fetchCursor({ db, search, cursor }) {
+  static deleteKey({ db, key, hash }) {
     return this.conn
-      .get(`/dbs/${encodeURIComponent(db)}/cursor/${encodeURIComponent(search)}/${encodeURIComponent(cursor)}`)
+      .delete('/key', {
+        params: { db, key, hash },
+      })
       .then(this.axiosResponseHandler);
   }
 
-  static fetchKeys({ db, search, cursor }) {
-    return this.conn
-      .get(`/dbs/${encodeURIComponent(db)}/scan/${encodeURIComponent(search)}/${encodeURIComponent(cursor)}`)
-      .then(this.axiosResponseHandler);
-  }
-
-  static deleteKey({ db, key }) {
-    return this.conn
-      .delete(`/dbs/${encodeURIComponent(db)}/keys/${encodeURIComponent(key)}`)
-      .then(this.axiosResponseHandler);
-  }
-
-  static deleteKeyWithHash({ db, key, hash }) {
-    return this.conn
-      .delete(`/dbs/${encodeURIComponent(db)}/hash/${encodeURIComponent(hash)}/keys/${encodeURIComponent(key)}`)
-      .then(this.axiosResponseHandler);
-  }
-
-  static deleteAllKeysWithHash({ db, hash }) {
-    return this.conn
-      .delete(`/dbs/${encodeURIComponent(db)}/hash/${encodeURIComponent(hash)}/keys`)
-      .then(this.axiosResponseHandler);
-  }
-
-  static setKey({ db, key, value }) {
-    return this.conn
-      .post(`/dbs/${encodeURIComponent(db)}/keys/${encodeURIComponent(key)}`, { value })
-      .then(this.axiosResponseHandler);
-  }
-
-  static setKeyWithHash({
-    db, key, hash, value,
+  static setKey({
+    db, key, value, hash,
   }) {
     return this.conn
-      .post(`/dbs/${encodeURIComponent(db)}/hash/${encodeURIComponent(hash)}/keys/${encodeURIComponent(key)}`, { value })
+      .post('/key', {
+        params: {
+          db, key, value, hash,
+        },
+      })
       .then(this.axiosResponseHandler);
   }
 
-  static getKey({ db, key }) {
+  static getKey({ db, key, hash }) {
     return this.conn
-      .get(`/dbs/${encodeURIComponent(db)}/keys/${encodeURIComponent(key)}`)
-      .then(this.axiosResponseHandler);
-  }
-
-  static getKeyWithHash({ db, key, hash }) {
-    return this.conn
-      .get(`/dbs/${encodeURIComponent(db)}/hash/${encodeURIComponent(hash)}/keys/${encodeURIComponent(key)}`)
+      .get('/key', {
+        params: {
+          db, key, hash,
+        },
+      })
       .then(this.axiosResponseHandler);
   }
 }
