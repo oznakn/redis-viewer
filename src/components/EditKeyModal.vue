@@ -1,5 +1,5 @@
 <template>
-  <fish-modal :title="`Key: ${record.key}`" :visible.sync="isModalVisible">
+  <fish-modal v-if="record" :title="`Key: ${record.key}`" :visible.sync="isModalVisible">
     <fish-form>
       <fish-fields>
         <fish-field label="Value: " span="eight">
@@ -43,8 +43,8 @@ export default {
             key: this.record.key,
             hash: this.hash,
           })
-          .then((response) => {
-            this.value = response;
+          .then(({ result }) => {
+            this.value = result;
           })
           .catch(() => {
             this.$message.error('Unkown error!');
@@ -55,8 +55,8 @@ export default {
             db: this.db.id,
             key: this.record.key,
           })
-          .then((response) => {
-            this.value = response;
+          .then(({ result }) => {
+            this.value = result;
           })
           .catch(() => {
             this.$message.error('Unkown error!');

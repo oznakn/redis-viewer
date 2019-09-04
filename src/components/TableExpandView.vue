@@ -49,8 +49,8 @@ export default {
             key: this.record.key,
             hash: this.hash,
           })
-          .then((response) => {
-            this.value = response;
+          .then(({ result }) => {
+            this.value = result;
           });
       }
 
@@ -63,10 +63,19 @@ export default {
           db: this.db.id,
           key: this.record.key,
         })
-        .then((response) => {
-          this.value = response;
+        .then(({ result }) => {
+          this.value = result;
         });
     },
   },
 };
 </script>
+
+<style lang="scss">
+  .hide-expand {
+    .fa.fa-angle-right {
+      display: none;
+      visibility: hidden;
+    }
+  }
+</style>

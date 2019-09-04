@@ -26,7 +26,10 @@
     </div>
 
     <div>
-      <span>Total Item count: {{ db.keys }}</span>
+      <div>Total Item count: {{ db.keys }}</div>
+      <div>Last Fetch Time:
+        <template v-if="fetchTime">{{ new Date(fetchTime).toLocaleString() }}</template>
+      </div>
     </div>
 
     <div style="margin-top: 20px;">
@@ -84,10 +87,16 @@ export default {
       results: [],
       cursors: [0],
       isLoading: false,
+      fetchTime: undefined,
     };
   },
   created() {
     this.updateData();
+
+    this.$eventBus.$on('updateDatabase', this.onUpdateDatabaseEvent);
+  },
+  beforeDestroy() {
+    this.$eventBus.$off('updateDatabase', this.onUpdateDatabaseEvent);
   },
   watch: {
     searchText() {
@@ -112,6 +121,11 @@ export default {
     onItemDelete() {
       this.updateData();
       this.updateDBInfo();
+    },
+    onUpdateDatabaseEvent({ db }) {
+      if (db === this.db.id) {
+        this.refreshData();
+      }
     },
     resetData() {
       this.cursors = [0];
@@ -155,7 +169,8 @@ export default {
         return this.$network
           .fetchPageWithHash({
             db: this.db.id, search: this.searchText, page: this.page, hash: this.hash,
-          }).then(({ results }) => {
+          }).then(({ results, time }) => {
+            this.fetchTime = time;
             this.results = results;
           });
       }
@@ -164,7 +179,8 @@ export default {
         .fetchPage({
           db: this.db.id, search: this.searchText, page: this.page,
         })
-        .then(({ results }) => {
+        .then(({ results, time }) => {
+          this.fetchTime = time;
           this.results = results;
         });
     },

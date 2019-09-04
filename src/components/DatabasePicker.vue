@@ -9,7 +9,7 @@
 
       <fish-option
         v-for="(db, index) in dbs"
-        :index="index"
+        :index="`${index}`"
         :content="db['name']"
         :key="db['id']" />
     </fish-menu>
@@ -27,8 +27,8 @@ export default {
     ...mapMutations(['setDBs']),
     updateDBs() {
       this.$network.getDBs()
-        .then((response) => {
-          this.setDBs(response);
+        .then(({ results }) => {
+          this.setDBs(results);
 
           if (this.dbs.length > 0) {
             this.$eventBus.$emit('changeDBView', { db: this.dbs[0] });

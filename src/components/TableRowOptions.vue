@@ -1,19 +1,18 @@
 <template>
   <div class="container">
-    <fish-button
-      v-if="record.type == 'hash'"
-      style="margin-right: 20px"
-      size="small"
-      :index="record.key"
-      @click="openHashSearchModal">
+    <div v-if="record.type == 'hash'" class="info-tag" style="margin-right: 30px">
       Hash
-    </fish-button>
+    </div>
 
-    <fish-button v-if="record.type != 'hash'" size="small" @click="openEditDatabaseItemModal">
+    <fish-button v-if="record.type == 'hash'" size="small" @click="openHashSearchModal">
       <i class="fa fa-pen"></i>
     </fish-button>
 
-    <fish-button v-if="record.type != 'hash'" type="negative" size="small" @click="deleteKey">
+    <fish-button v-else size="small" @click="openEditDatabaseItemModal">
+      <i class="fa fa-pen"></i>
+    </fish-button>
+
+    <fish-button type="negative" size="small" @click="deleteKey">
       <i class="fa fa-times"></i>
     </fish-button>
   </div>
@@ -79,5 +78,26 @@ export default {
       margin-left: 5px;
       margin-right: 5px;
     }
+  }
+
+  .info-tag {
+    display: inline-block;
+
+    border-radius: 2px;
+    line-height: 1em;
+    min-height: 1em;
+
+    white-space: nowrap;
+    text-align: center;
+
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 0.75em 1em;
+
+    color: rgba(0, 0, 0, 0.6);
+    background: rgb(238, 239, 240);
+    font-family: "Lato", "proxima-nova", "Helvetica Neue", Arial, sans-serif;
+    outline: none;
+    vertical-align: baseline;
   }
 </style>

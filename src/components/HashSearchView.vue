@@ -1,9 +1,15 @@
 <template>
   <div>
-    <div class="hash-search-view-bg-overlay" :class="{'visible': isVisible}" @click="isVisible = false"></div>
+    <div class="hash-search-view-bg-overlay"
+      :class="{'visible': isVisible}"
+      @click="isVisible = false"></div>
 
     <div class="hash-search-view" :class="{'visible': isVisible}">
-      <fish-card fluid>
+      <fish-card fluid style="padding-bottom: 60px">
+        <span class="hash-search-view-close-button" @click="isVisible = false">
+          <i class="fa fa-lg fa-times"></i>
+        </span>
+
         <database-view
           v-if="db"
           :db="db"
@@ -81,5 +87,15 @@ export default {
     &.visible {
       display: block;
     }
+  }
+
+  .hash-search-view-close-button {
+    display: inline-block;
+    cursor: pointer;
+
+    position: absolute;
+
+    right: 10px;
+    top: 10px;
   }
 </style>

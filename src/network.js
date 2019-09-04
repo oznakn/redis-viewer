@@ -8,15 +8,13 @@ export default class Network {
   }
 
   static update() {
-  /*  const config = {};
-
-    if (this.$root.$store.state.settings.serverURL) {
-      config.baseURL = this.$root.$store.state.settings.serverURL;
-    }
-*/
     this.conn = axios.create({
       baseURL: this.$root.$store.state.settings.serverURL,
+      headers: {
+        Authentication: this.$root.$store.state.settings.password,
+      },
     });
+    console.log(this.$root.$store.state.settings.password);
 
     this.connInit();
   }
@@ -84,6 +82,12 @@ export default class Network {
   static deleteKeyWithHash({ db, key, hash }) {
     return this.conn
       .delete(`/dbs/${encodeURIComponent(db)}/hash/${encodeURIComponent(hash)}/keys/${encodeURIComponent(key)}`)
+      .then(this.axiosResponseHandler);
+  }
+
+  static deleteAllKeysWithHash({ db, hash }) {
+    return this.conn
+      .delete(`/dbs/${encodeURIComponent(db)}/hash/${encodeURIComponent(hash)}/keys`)
       .then(this.axiosResponseHandler);
   }
 
