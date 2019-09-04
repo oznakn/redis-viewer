@@ -14,7 +14,6 @@ export default class Network {
         Authentication: this.$root.$store.state.settings.password,
       },
     });
-    console.log(this.$root.$store.state.settings.password);
 
     this.connInit();
   }
