@@ -9,8 +9,10 @@ Vue.use(Vuex);
 export default new Vuex.Store({
   state: {
     dbs: [],
+    accessKey: '',
     settings: {
       serverURL: '',
+      username: '',
       password: '',
     },
   },
@@ -20,14 +22,30 @@ export default new Vuex.Store({
     },
   },
   mutations: {
-    saveSettings(state, { serverURL, password }) {
+    setSettings(state, { serverURL, username, password }) {
       state.settings.serverURL = serverURL;
+      state.settings.username = username;
       state.settings.password = password;
-
-      network.update();
+    },
+    setAccessKey(state, accessKey) {
+      state.accessKey = accessKey;
     },
     setDBs(state, dbs) {
       state.dbs = dbs;
+    },
+  },
+  actions: {
+    saveSettings({ dispatch, commit }, { serverURL, username, password }) {
+      commit('setSettings', { serverURL, username, password });
+
+      return dispatch('login')
+        .then(() => network.update());
+    },
+    login({ state, commit }) {
+      return network.login({ username: state.settings.username, password: state.settings.password })
+        .then((response) => {
+          commit('setAccessKey', response.accessKey);
+        });
     },
   },
   plugins: [

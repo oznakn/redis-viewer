@@ -1,9 +1,9 @@
 <template>
   <div>
     <div style="margin: 15px 0;">
-      <h2>{{ db.name }}</h2>
+      <h2 v-if="!hash">{{ db.name }}</h2>
 
-      <h4 v-show="hash">Hash key: {{ hash }}</h4>
+      <h4 v-else>Hash key: {{ hash }}</h4>
     </div>
 
     <div style="display: flex; flex-flow: row nowrap;">
@@ -13,8 +13,12 @@
         size="medium"
         v-model="searchText" />
 
+      <fish-button style="margin: 0 8px" type="primary" @click="openNewKeyModal">
+        <i class="fa fa-plus"></i>
+      </fish-button>
+
       <fish-button style="margin: 0 8px" type="positive" @click="refreshData">
-        <i class="fa fa-sync"></i>
+        <i class="fas fa-sync"></i>
       </fish-button>
 
       <fish-pagination
@@ -26,7 +30,7 @@
     </div>
 
     <div>
-      <div>Total Item count: {{ db.keys }}</div>
+      <div v-show="!hash">Total Item count: {{ db.keys }}</div>
       <div>Last Fetch Time:
         <template v-if="fetchTime">{{ new Date(fetchTime).toLocaleString() }}</template>
       </div>
@@ -38,11 +42,7 @@
         :data="results"
         :loading="isLoading"
         ref="table"
-        :expandedRowRender="(h, record) => {
-          if (record.type === 'hash') return undefined;
-
-          return h(TableExpandView, { props: { record, db, hash } })
-        }" />
+        :expandedRowRender="(h, record) => h(TableExpandView, { props: { record, db, hash } })" />
     </div>
   </div>
 </template>
@@ -57,10 +57,6 @@ export default {
     db: {
       type: Object,
       required: true,
-    },
-    workMode: {
-      type: String,
-      default: 'key',
     },
     hash: {
       type: String,
@@ -115,6 +111,7 @@ export default {
   methods: {
     onPageChange(page) {
       this.page = page;
+      this.hasMore = true;
 
       this.updateData();
     },
@@ -137,22 +134,26 @@ export default {
       this.updateDBInfo();
     },
     updateDBInfo() {
-      this.$network
-        .fetchDBSize({
-          db: this.db.id,
-        })
-        .then(({ size }) => {
-          this.db.keys = size;
-        })
-        .catch(() => {
-          this.$message.error('Unkown error!');
-        });
+      if (this.hash) {
+        return this.$network
+          .fetchDBSize({
+            db: this.db.id,
+          })
+          .then(({ size }) => {
+            this.db.keys = size;
+          })
+          .catch(() => {
+            this.$message.error('Unkown error!');
+          });
+      }
+
+      return Promise.resolve(true);
     },
     updateData() {
       if (this.isSettingsFilled && this.hasMore) {
         this.isLoading = true;
 
-        this.fetchPage()
+        return this.fetchPage()
           .catch(() => {
             this.$message.error('Unkown error!');
           })
@@ -160,13 +161,16 @@ export default {
             this.isLoading = false;
           });
       }
+
+      return Promise.resolve(true);
     },
     fetchPage() {
-      if (this.workMode === 'hash' && (this.hash === undefined || this.hash.length === 0)) return Promise.resolve(true);
-
       return this.$network
         .fetchPage({
-          db: this.db.id, search: this.searchText, page: this.page, hash: this.workMode === 'hash' ? this.hash : undefined,
+          db: this.db.id,
+          search: this.searchText,
+          page: this.page,
+          hash: this.hash ? this.hash : undefined,
         })
         .then(({ results, time }) => {
           this.fetchTime = time;
@@ -174,6 +178,11 @@ export default {
 
           if (results.length === 0) this.hasMore = false;
         });
+    },
+    openNewKeyModal() {
+      this.$eventBus.$emit('openNewKeyModal', {
+        db: this.db, hash: this.hash,
+      });
     },
   },
   computed: {

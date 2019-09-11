@@ -25,9 +25,11 @@ export default {
   },
   created() {
     this.$eventBus.$on('openEditKeyModal', this.showModal);
+    this.$eventBus.$on('closeModals', this.closeModal);
   },
   beforeDestroy() {
     this.$eventBus.$off('openEditKeyModal', this.showModal);
+    this.$eventBus.$off('closeModals', this.closeModal);
   },
   methods: {
     showModal({ db, record, hash }) {
@@ -41,7 +43,7 @@ export default {
         .getKey({
           db: this.db.id,
           key: this.record.key,
-          hash: this.record.type === undefined ? this.hash : undefined,
+          hash: this.record.type === 'hashKey' ? this.hash : undefined,
         })
         .then(({ result }) => {
           this.value = result;
@@ -50,13 +52,20 @@ export default {
           this.$message.error('Unkown error!');
         });
     },
+    closeModal() {
+      this.db = undefined;
+      this.record = undefined;
+      this.hash = undefined;
+      this.value = '';
+      this.isModalVisible = false;
+    },
     save() {
       return this.$network
         .setKey({
           db: this.db.id,
           key: this.record.key,
           value: this.value,
-          hash: this.record.type === undefined ? this.hash : undefined,
+          hash: this.record.type === 'hashKey' ? this.hash : undefined,
         })
         .then(() => {
           this.isModalVisible = false;

@@ -1,16 +1,15 @@
 <template>
   <div class="container">
-    <div v-if="record.type == 'hash'" class="info-tag" style="margin-right: 30px">
-      Hash
-    </div>
 
     <fish-button v-if="record.type == 'hash'" size="small" @click="openHashSearchModal">
       <i class="fa fa-pen"></i>
     </fish-button>
 
-    <fish-button v-else size="small" @click="openEditDatabaseItemModal">
-      <i class="fa fa-pen"></i>
-    </fish-button>
+    <template v-else>
+      <fish-button size="small" @click="openEditDatabaseItemModal">
+        <i class="fa fa-pen"></i>
+      </fish-button>
+    </template>
 
     <fish-button type="negative" size="small" @click="deleteKey">
       <i class="fa fa-times"></i>
@@ -46,7 +45,7 @@ export default {
         .deleteKey({
           db: this.db.id,
           key: this.record.key,
-          hash: this.record.type === undefined ? this.hash : undefined,
+          hash: this.record.type === 'hashKey' ? this.hash : undefined,
         })
         .then(() => {
           this.$message.success('Success!');

@@ -1,32 +1,54 @@
 <template>
-  <div style="display: flex; flex-flow: row nowrap;">
-    <div style="flex-grow: 1; margin-left: 10px;">
-      <template v-if="!isLoading">{{ value }}</template>
-      <span v-else style="color: #aaa">
-        Loading...
-      </span>
+ <div>
+    <div v-if="this.record.type != 'hash'" style="display: flex; flex-flow: row nowrap;">
+      <div style="flex-grow: 1; margin-left: 10px;">
+        <template v-if="!isLoading">
+          <vue-json-pretty v-if="value.isJSON" :path="'res'" :data="value.data"/>
+          <span v-else>{{ value.data }}</span>
+        </template>
+
+        <span v-else style="color: #aaa">
+          Loading...
+        </span>
+      </div>
+
+      <div style="margin-right: 5px;">
+        <fish-button type="positive" size="tiny" @click="refreshData">
+          <i class="fa fa-sync"></i>
+        </fish-button>
+      </div>
     </div>
 
-    <div style="margin-right: 5px;">
-      <fish-button type="positive" size="tiny" @click="refreshData">
-        <i class="fa fa-sync"></i>
+    <div v-else>
+      <fish-button
+        size="small"
+        style="margin-right: 30px"
+        @click="openHashSearchModal">
+        Hash
       </fish-button>
     </div>
-  </div>
+ </div>
 </template>
 
 <script>
+import VueJsonPretty from 'vue-json-pretty';
+
 export default {
   props: ['db', 'record', 'hash'],
+  components: {
+    VueJsonPretty,
+  },
   data() {
     return {
-      value: this.record.value,
+      value: undefined,
       isLoading: false,
     };
   },
   created() {
-    if (this.value === undefined) {
+    if (this.record.value === undefined) {
       this.refreshData();
+    } else {
+      this.value = this.tryJSON(this.record.value);
     }
   },
   methods: {
@@ -48,11 +70,23 @@ export default {
         .getKey({
           db: this.db.id,
           key: this.record.key,
-          hash: this.record.type === undefined ? this.hash : undefined,
+          hash: this.record.type === 'hashKey' ? this.hash : undefined,
         })
         .then(({ result }) => {
-          this.value = result;
+          this.value = this.tryJSON(result);
         });
+    },
+    openHashSearchModal() {
+      this.$eventBus.$emit('openHashSearchView', { db: this.db, hash: this.record.key });
+    },
+    tryJSON(data) {
+      try {
+        const parsed = JSON.parse(data);
+
+        return { isJSON: true, data: parsed };
+      } catch (e) {
+        return { isJSON: false, data };
+      }
     },
   },
 };

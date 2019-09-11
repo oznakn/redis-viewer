@@ -14,7 +14,7 @@ export default class Socket {
 
   static update() {
     if (this.conn === undefined && this.$root.$store.state.settings.serverURL) {
-      this.conn = new WebSocket('ws://localhost:5000/ws');
+      this.conn = new WebSocket(`ws://${this.$root.$store.state.settings.serverURL}/ws`);
 
       this.conn.onclose = this.conn.onerror = () => { // eslint-disable-line
         this.isConnected = false;

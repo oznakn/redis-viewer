@@ -3,7 +3,7 @@
     <fish-layout>
       <nav slot="header" style="display: flex; flex-flow: row nowrap;">
         <div class="logo">
-          Redis UI
+          Redis Viewer
         </div>
 
         <database-picker style="margin-left: 40px"></database-picker>
@@ -24,6 +24,7 @@
     </fish-layout>
 
     <edit-key-modal />
+    <new-key-modal />
     <settings-modal />
 
     <vue-progress-bar />
@@ -33,15 +34,17 @@
 <script>
 import DatabasePicker from './components/DatabasePicker.vue';
 import EditKeyModal from './components/EditKeyModal.vue';
+import NewKeyModal from './components/NewKeyModal.vue';
 import SettingsModal from './components/SettingsModal.vue';
 import DatabaseView from './components/DatabaseView.vue';
 import HashSearchView from './components/HashSearchView.vue';
 
 export default {
   components: {
-    EditKeyModal,
-    SettingsModal,
     DatabasePicker,
+    EditKeyModal,
+    NewKeyModal,
+    SettingsModal,
     DatabaseView,
     HashSearchView,
   },
@@ -64,9 +67,14 @@ export default {
     this.$eventBus.$on('changeDBView', this.changeDBView);
     this.$eventBus.$on('socketStatusChanged', this.onSocketStatusChanged);
   },
+  mounted() {
+    window.addEventListener('keydown', this.onKeyDown);
+  },
   beforeDestroy() {
     this.$eventBus.$off('changeDBView', this.changeDBView);
     this.$eventBus.$off('socketStatusChanged', this.onSocketStatusChanged);
+
+    window.removeEventListener('keydown', this.onKeyDown);
   },
   methods: {
     onSocketStatusChanged({ isConnected }) {
@@ -77,6 +85,11 @@ export default {
     },
     openSettingsModal() {
       this.$eventBus.$emit('openSettingsModal');
+    },
+    onKeyDown(e) {
+      if (e.keyCode === 27) {
+        this.$eventBus.$emit('closeModals');
+      }
     },
   },
 };

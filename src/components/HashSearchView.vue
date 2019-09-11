@@ -6,14 +6,13 @@
 
     <div class="hash-search-view" :class="{'visible': isVisible}">
       <fish-card fluid style="padding-bottom: 60px">
-        <span class="hash-search-view-close-button" @click="isVisible = false">
+        <span class="hash-search-view-close-button" @click="closeView">
           <i class="fa fa-lg fa-times"></i>
         </span>
 
         <database-view
           v-if="db"
           :db="db"
-          workMode="hash"
           :hash="hash"
           style="padding: 30px" />
       </fish-card>
@@ -37,15 +36,22 @@ export default {
   },
   created() {
     this.$eventBus.$on('openHashSearchView', this.openView);
+    this.$eventBus.$on('closeModals', this.closeView);
   },
   beforeDestroy() {
     this.$eventBus.$off('openHashSearchView', this.openView);
+    this.$eventBus.$off('closeModals', this.closeView);
   },
   methods: {
     openView({ db, hash }) {
       this.db = db;
       this.hash = hash;
       this.isVisible = true;
+    },
+    closeView() {
+      this.db = undefined;
+      this.hash = undefined;
+      this.isVisible = false;
     },
   },
 };

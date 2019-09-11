@@ -9,9 +9,9 @@ export default class Network {
 
   static update() {
     this.conn = axios.create({
-      baseURL: this.$root.$store.state.settings.serverURL,
+      baseURL: this.fixURL(this.$root.$store.state.settings.serverURL),
       headers: {
-        Authorization: this.$root.$store.state.settings.password,
+        Authorization: `Bearer ${this.$root.$store.state.accessKey}`,
       },
     });
 
@@ -30,8 +30,25 @@ export default class Network {
     });
   }
 
+  static fixURL(url) {
+    if (url.indexOf('http') !== 0) {
+      url = `http://${url}`;
+    }
+
+    if (url[url.length - 1] !== '/') {
+      url += '/';
+    }
+    return url;
+  }
+
   static axiosResponseHandler(response) {
     return response.data;
+  }
+
+  static login({ username, password }) {
+    return this.conn
+      .post('/login', { username, password })
+      .then(this.axiosResponseHandler);
   }
 
   static getDBs() {
@@ -73,9 +90,7 @@ export default class Network {
   }) {
     return this.conn
       .post('/key', {
-        params: {
-          db, key, value, hash,
-        },
+        db, key, value, hash,
       })
       .then(this.axiosResponseHandler);
   }
