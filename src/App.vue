@@ -6,52 +6,87 @@
           Redis Viewer
         </div>
 
-        <database-picker style="margin-left: 40px"></database-picker>
+        <div>
+          <fish-menu
+            mode="horizontal"
+            size="large"
+            @change="onDBChange"
+            ref="menu">
 
-        <div class="socket-status" :class="{active: isSocketConnected}">
-          {{ isSocketConnected ? 'Socket connected' : 'Socket not connected' }}
+            <fish-option
+              v-for="(db, index) in dbs"
+              :index="`${index}`"
+              :content="db['name']"
+              :key="db['id']" />
+          </fish-menu>
         </div>
 
-        <div class="settings-button" @click="openSettingsModal">
-          <i class="fa fa-cog"></i>
+        <div class="nav-right">
+          <div class="socket-status" :class="{active: isSocketConnected}">
+            <span>{{ isSocketConnected ? 'Socket connected' : 'Socket not connected' }}</span>
+          </div>
+
+          <div v-if="stats" class="stats">
+            <span>Memory: {{ stats.memory }}</span>
+            <span>CPU: {{ stats.cpu }}</span>
+          </div>
+
+          <div class="buttons">
+            <div @click="openInfoModal">
+              <i class="fas fa-info"></i>
+            </div>
+            <div @click="refreshData">
+              <i class="fas fa-sync"></i>
+            </div>
+            <div @click="openSettingsModal">
+              <i class="fa fa-cog"></i>
+            </div>
+          </div>
         </div>
       </nav>
 
       <div slot="content" style="min-height: 100vh; padding: 10px 40px 40px 40px;">
         <database-view v-if="currentDB" :db="currentDB" :key="currentDB['id']"></database-view>
         <hash-search-view />
+        <repl-view />
       </div>
     </fish-layout>
 
     <edit-key-modal />
     <new-key-modal />
     <settings-modal />
+    <info-modal />
 
     <vue-progress-bar />
   </div>
 </template>
 
 <script>
-import DatabasePicker from './components/DatabasePicker.vue';
-import EditKeyModal from './components/EditKeyModal.vue';
-import NewKeyModal from './components/NewKeyModal.vue';
-import SettingsModal from './components/SettingsModal.vue';
-import DatabaseView from './components/DatabaseView.vue';
-import HashSearchView from './components/HashSearchView.vue';
+import { mapState, mapMutations } from 'vuex';
+
+import EditKeyModal from './components/modals/EditKeyModal.vue';
+import NewKeyModal from './components/modals/NewKeyModal.vue';
+import SettingsModal from './components/modals/SettingsModal.vue';
+import InfoModal from './components/modals/InfoModal.vue';
+import DatabaseView from './components/views/DatabaseView.vue';
+import HashSearchView from './components/views/HashSearchView.vue';
+import REPLView from './components/views/REPLView.vue';
 
 export default {
   components: {
-    DatabasePicker,
     EditKeyModal,
     NewKeyModal,
     SettingsModal,
     DatabaseView,
+    InfoModal,
     HashSearchView,
+    replView: REPLView,
   },
   data() {
     return {
       currentDB: undefined,
       isSocketConnected: this.$socket.isConnected,
+      statsInterval: undefined,
     };
   },
   created() {
@@ -66,6 +101,11 @@ export default {
 
     this.$eventBus.$on('changeDBView', this.changeDBView);
     this.$eventBus.$on('socketStatusChanged', this.onSocketStatusChanged);
+
+    this.statsInterval = setInterval(() => this.fetchRedisStats(), 60000);
+
+    this.updateDBs();
+    this.fetchRedisStats();
   },
   mounted() {
     window.addEventListener('keydown', this.onKeyDown);
@@ -77,6 +117,7 @@ export default {
     window.removeEventListener('keydown', this.onKeyDown);
   },
   methods: {
+    ...mapMutations(['setDBs', 'setStats']),
     onSocketStatusChanged({ isConnected }) {
       this.isSocketConnected = isConnected;
     },
@@ -86,11 +127,47 @@ export default {
     openSettingsModal() {
       this.$eventBus.$emit('openSettingsModal');
     },
+    openInfoModal() {
+      this.$eventBus.$emit('openInfoModal');
+    },
     onKeyDown(e) {
       if (e.keyCode === 27) {
         this.$eventBus.$emit('closeModals');
       }
     },
+    onDBChange(dbIndex) {
+      this.$refs.menu.$children.forEach((child) => {
+        child.active = false;
+      });
+      this.$refs.menu.setActive(dbIndex);
+
+      this.$eventBus.$emit('changeDBView', { db: this.dbs[dbIndex] });
+    },
+    updateDBs() {
+      this.$network.getDBs()
+        .then(({ results }) => {
+          this.setDBs(results);
+
+          if (this.dbs.length > 0) {
+            this.$eventBus.$emit('changeDBView', { db: this.dbs[0] });
+          }
+        })
+        .catch(() => {
+          if (this.isSettingsFilled === true) {
+            this.$message.error('Unknown Error!');
+          }
+        });
+    },
+    fetchRedisStats() {
+      this.$network.getRedisStats()
+        .then((response) => this.setStats(response.result));
+    },
+    refreshData() {
+      this.updateDBs();
+    },
+  },
+  computed: {
+    ...mapState(['dbs', 'stats']),
   },
 };
 </script>
@@ -100,36 +177,62 @@ export default {
     padding: .75em;
     font-weight: bold;
     font-size: 1.2rem;
+
+    min-width: 150px;
   }
 
-  .socket-status {
-    padding: 10px;
+  .nav-right {
+    width: 100%;
 
-    margin-left: 20px;
+    display: flex;
+    flex-flow: row nowrap;
 
-    font-size: 1.2rem;
-    color: red;
+    .stats {
+      margin: 0 14px;
+      display: flex;
+      flex-flow: row nowrap;
+      align-items: center;
 
-    &.active {
-      color: green;
+      &>span {
+        margin: 0 7px;
+      }
     }
-  }
 
-  .settings-button {
-    cursor: pointer;
+    .socket-status {
+      padding: 10px;
 
-    margin-left: auto;
+      margin-left: 20px;
 
-    padding: 10px;
+      font-size: 1.2rem;
+      color: red;
 
-    font-size: 1.2rem;
+      display: flex;
+      flex-flow: row nowrap;
+      align-items: center;
 
-    transition: all 100ms ease-in-out;
+      &.active {
+        color: green;
+      }
+    }
 
-    background: transparent;
+    .buttons {
+      margin-left: auto;
+      display: flex;
+      flex-flow: row nowrap;
 
-    &:hover {
-      background: #f8f8f8;
+      &>div {
+        font-size: 1.2rem;
+        padding: 10px;
+        cursor: pointer;
+
+        transition: all 100ms ease-in-out;
+
+        background: transparent;
+
+        &:hover {
+          background: #f8f8f8;
+        }
+      }
     }
   }
 </style>

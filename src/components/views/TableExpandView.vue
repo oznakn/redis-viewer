@@ -3,8 +3,7 @@
     <div v-if="this.record.type != 'hash'" style="display: flex; flex-flow: row nowrap;">
       <div style="flex-grow: 1; margin-left: 10px;">
         <template v-if="!isLoading">
-          <vue-json-pretty v-if="value.isJSON" :path="'res'" :data="value.data"/>
-          <span v-else>{{ value.data }}</span>
+          <vue-json-pretty :deep="'1'" :show-line="false" :data="value.data"/>
         </template>
 
         <span v-else style="color: #aaa">
@@ -24,7 +23,7 @@
         size="small"
         style="margin-right: 30px"
         @click="openHashSearchModal">
-        Hash
+        <i class="fas fa-eye"></i>
       </fish-button>
     </div>
  </div>
@@ -83,9 +82,9 @@ export default {
       try {
         const parsed = JSON.parse(data);
 
-        return { isJSON: true, data: parsed };
+        return { data: parsed };
       } catch (e) {
-        return { isJSON: false, data };
+        return { data };
       }
     },
   },

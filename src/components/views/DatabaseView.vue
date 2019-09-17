@@ -13,7 +13,11 @@
         size="medium"
         v-model="searchText" />
 
-      <fish-button style="margin: 0 8px" type="primary" @click="openNewKeyModal">
+      <fish-button v-if="!hash && hasFullAccess" style="margin: 0 8px" @click="openREPLView">
+        <i class="fas fa-terminal"></i>
+      </fish-button>
+
+      <fish-button v-if="hasFullAccess" style="margin: 0 8px" type="primary" @click="openNewKeyModal">
         <i class="fa fa-plus"></i>
       </fish-button>
 
@@ -30,7 +34,7 @@
     </div>
 
     <div>
-      <div v-show="!hash">Total Item count: {{ db.keys }}</div>
+      <div v-if="!hash">Total Item count: {{ db.keys }}</div>
       <div>Last Fetch Time:
         <template v-if="fetchTime">{{ new Date(fetchTime).toLocaleString() }}</template>
       </div>
@@ -184,9 +188,14 @@ export default {
         db: this.db, hash: this.hash,
       });
     },
+    openREPLView() {
+      this.$eventBus.$emit('openREPLView', {
+        db: this.db,
+      });
+    },
   },
   computed: {
-    ...mapGetters(['isSettingsFilled']),
+    ...mapGetters(['isSettingsFilled', 'hasFullAccess']),
     totalItemCount() {
       return this.hasMore ? this.db.keys : this.rowsPerPage * (this.page - 1);
     },

@@ -2,22 +2,24 @@
   <div class="container">
 
     <fish-button v-if="record.type == 'hash'" size="small" @click="openHashSearchModal">
-      <i class="fa fa-pen"></i>
+      <i class="fa fa-eye"></i>
     </fish-button>
 
-    <template v-else>
+    <template v-else-if="hasFullAccess">
       <fish-button size="small" @click="openEditDatabaseItemModal">
         <i class="fa fa-pen"></i>
       </fish-button>
     </template>
 
-    <fish-button type="negative" size="small" @click="deleteKey">
+    <fish-button v-if="hasFullAccess" type="negative" size="small" @click="deleteKey">
       <i class="fa fa-times"></i>
     </fish-button>
   </div>
 </template>
 
 <script>
+import { mapGetters } from 'vuex';
+
 export default {
   props: {
     db: {
@@ -56,6 +58,9 @@ export default {
           this.$message.error('Unkown error!');
         });
     },
+  },
+  computed: {
+    ...mapGetters(['hasFullAccess']),
   },
 };
 </script>

@@ -20,7 +20,10 @@ export default class Network {
 
   static connInit() {
     this.conn.interceptors.request.use((config) => {
-      this.$root.$Progress.start();
+      if (config.url.indexOf('/memory') === -1) {
+        this.$root.$Progress.start();
+      }
+
       return config;
     });
 
@@ -102,6 +105,25 @@ export default class Network {
           db, key, hash,
         },
       })
+      .then(this.axiosResponseHandler);
+  }
+
+  static sendCommand({ db, command }) {
+    return this.conn
+      .post('/command', {
+        command,
+      },
+      {
+        params: {
+          db,
+        },
+      })
+      .then(this.axiosResponseHandler);
+  }
+
+  static getRedisStats() {
+    return this.conn
+      .get('/stats')
       .then(this.axiosResponseHandler);
   }
 }

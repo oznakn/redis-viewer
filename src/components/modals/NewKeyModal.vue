@@ -1,7 +1,11 @@
 <template>
   <fish-modal :visible.sync="isModalVisible">
     <fish-form>
-      <fish-switch v-if="!hash" v-model="isHash"></fish-switch>
+      <fish-switch v-model="isHash">Enable hash key</fish-switch>
+
+      <fish-field v-if="isHash" label="Hash: " span="eight">
+        <fish-input v-model="hash"></fish-input>
+      </fish-field>
 
       <fish-field label="Key: " span="eight">
         <fish-input v-model="key"></fish-input>
@@ -41,11 +45,15 @@ export default {
       this.db = db;
       this.hash = hash;
       this.isModalVisible = true;
+      if (hash) {
+        this.isHash = true;
+      }
     },
     closeModal() {
       this.db = undefined;
       this.hash = '';
       this.isModalVisible = false;
+      this.isHash = false;
     },
     save() {
       return this.$network

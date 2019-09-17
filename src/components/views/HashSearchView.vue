@@ -58,23 +58,6 @@ export default {
 </script>
 
 <style lang="scss">
-  .hash-search-view {
-    position: fixed;
-    bottom: 10px;
-    left: 10px;
-    right: 10px;
-
-    transform: translateY(150%);
-
-    z-index: 101;
-
-    transition: all 400ms ease-in-out;
-
-    &.visible {
-      transform: translateY(0%);
-    }
-  }
-
   .hash-search-view-bg-overlay {
     position: fixed;
     top: 0;
@@ -95,13 +78,34 @@ export default {
     }
   }
 
-  .hash-search-view-close-button {
-    display: inline-block;
-    cursor: pointer;
-
-    position: absolute;
-
+  .hash-search-view {
+    position: fixed;
+    bottom: 10px;
+    left: 10px;
     right: 10px;
-    top: 10px;
+
+    transform: translateY(150%);
+
+    z-index: 101;
+
+    transition: all 400ms ease-in-out;
+
+    &.visible {
+      transform: translateY(0%);
+    }
+
+    .fish.card {
+      height: 100%;
+    }
+
+    .hash-search-view-close-button {
+      display: inline-block;
+      cursor: pointer;
+
+      position: absolute;
+
+      right: 10px;
+      top: 10px;
+    }
   }
 </style>
