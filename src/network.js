@@ -9,9 +9,9 @@ export default class Network {
 
   static update() {
     this.conn = axios.create({
-      baseURL: this.fixURL(this.$root.$store.state.settings.serverURL),
+      baseURL: `${this.fixURL(this.$root.$store.getters.serverURL)}`,
       headers: {
-        Authorization: `Bearer ${this.$root.$store.state.accessKey}`,
+        Authorization: `Bearer ${this.$root.$store.getters.accessKey}`,
       },
     });
 
@@ -27,10 +27,15 @@ export default class Network {
       return config;
     });
 
-    this.conn.interceptors.response.use((response) => {
-      this.$root.$Progress.finish();
-      return response;
-    });
+    this.conn.interceptors.response.use(
+      (response) => {
+        this.$root.$Progress.finish();
+        return response;
+      }, (error) => {
+        this.$root.$Progress.finish();
+        return error;
+      },
+    );
   }
 
   static fixURL(url) {

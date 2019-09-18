@@ -14,7 +14,7 @@
 </template>
 
 <script>
-import { mapState } from 'vuex';
+import { mapGetters } from 'vuex';
 
 export default {
   data() {
@@ -39,7 +39,7 @@ export default {
     },
   },
   computed: {
-    ...mapState(['stats']),
+    ...mapGetters(['stats']),
   },
 };
 </script>

@@ -6,35 +6,38 @@
         name="serverURL"
         style="width: 100%"
         :rules="[{ required: true, message: 'Server URL cannot be empty'}]">
-        <fish-input v-model="settings.serverURL"></fish-input>
+        <fish-input v-model="serverURL"></fish-input>
       </fish-field>
 
       <fish-field
         label="Username"
         style="width: 100%"
         name="username">
-        <fish-input type="text" v-model="settings.username"></fish-input>
+        <fish-input type="text" v-model="username"></fish-input>
       </fish-field>
 
       <fish-field
         label="Password"
         style="width: 100%"
         name="password">
-        <fish-input type="password" v-model="settings.password"></fish-input>
+        <fish-input type="password" v-model="password"></fish-input>
       </fish-field>
 
-      <fish-button type="primary" @click="save">Save</fish-button>
+      <fish-button type="primary" @click="save">Save and Login</fish-button>
     </fish-form>
   </fish-modal>
 </template>
 
 <script>
-import { mapState, mapActions } from 'vuex';
+import { mapActions } from 'vuex';
 
 export default {
   data() {
     return {
       isModalVisible: false,
+      username: '',
+      password: '',
+      serverURL: this.$store.getters.serverURL,
     };
   },
   created() {
@@ -49,7 +52,7 @@ export default {
     this.$eventBus.$off('closeModals', this.onCloseModalsEvent);
   },
   methods: {
-    ...mapActions(['saveSettings']),
+    ...mapActions(['saveSettingsAndLogin']),
     showModal() {
       this.isModalVisible = true;
     },
@@ -57,32 +60,29 @@ export default {
       this.isModalVisible = false;
     },
     save() {
-      if (this.settings.serverURL.indexOf('http') === 0) {
-        this.settings.serverURL = this.settings.serverURL.substring(this.settings.serverURL.indexOf('/') + 2, this.settings.serverURL.length);
+      if (this.serverURL.indexOf('http') === 0) {
+        this.serverURL = this.serverURL.substring(this.serverURL.indexOf('/') + 2, this.serverURL.length);
       }
 
-      while (this.settings.serverURL[this.settings.serverURL.length - 1] === '/') {
-        this.settings.serverURL = this.settings.serverURL.substring(0, this.settings.serverURL.length - 1);
+      while (this.serverURL[this.serverURL.length - 1] === '/') {
+        this.serverURL = this.serverURL.substring(0, this.serverURL.length - 1);
       }
 
       this
-        .saveSettings({
-          ...this.settings,
+        .saveSettingsAndLogin({
+          serverURL: this.serverURL,
+          username: this.username,
+          password: this.password,
         })
         .then(() => {
           this.$message.success('Saved!');
 
-          setTimeout(() => {
-            window.location.reload();
-          }, 500);
+          this.$eventBus.$emit('refreshSystem');
         })
         .catch(() => {
-          this.$message.error('Unknown Error!');
+          this.$message.error('Server error or Wrong credentials!');
         });
     },
-  },
-  computed: {
-    ...mapState(['settings']),
   },
 };
 </script>

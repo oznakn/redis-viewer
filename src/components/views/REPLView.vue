@@ -18,7 +18,7 @@
             </template>
 
             <template v-else>
-              <vue-json-pretty :deep="'1'" :show-line="false" :data="item.data"/>
+              <vue-json-pretty :deep="1" :show-line="false" :data="item.data"/>
             </template>
           </div>
         </div>
@@ -101,7 +101,19 @@ export default {
 
           this.$network.sendCommand({ db: this.db.id, command: this.input })
             .then((response) => {
-              this.items.push({ type: 'o', data: response.result });
+              let data;
+
+              if (typeof (response.result) !== 'string') {
+                data = response.result;
+              } else {
+                data = response.result.split('\n');
+
+                if (data.length === 1) {
+                  data = [data];
+                }
+              }
+
+              this.items.push({ type: 'o', data });
               this.onItem();
             })
             .catch(() => {

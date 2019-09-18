@@ -7,20 +7,21 @@ export default class Socket {
 
     if (WebSocket === undefined) {
       this.$root.$message.error('WebSocket not supported on your browser');
-    } else {
-      this.update();
     }
   }
 
   static update() {
-    if (this.conn === undefined && this.$root.$store.state.settings.serverURL) {
-      this.conn = new WebSocket(`ws://${this.$root.$store.state.settings.serverURL}/ws`);
+    this.isConnected = false;
+
+    if (this.conn === undefined && this.$root.$store.getters.serverURL) {
+      this.conn = new WebSocket(`ws://${this.$root.$store.getters.serverURL}/ws`);
 
       this.conn.onclose = this.conn.onerror = () => { // eslint-disable-line
         this.isConnected = false;
         this.emitSocketStatus();
 
         this.conn = undefined;
+        this.update();
       };
 
       this.conn.onmessage = (e) => {
@@ -37,6 +38,8 @@ export default class Socket {
       this.conn.onopen = () => {
         this.conn.send('ping');
       };
+    } else if (this.conn !== undefined) {
+      this.conn.close();
     }
   }
 

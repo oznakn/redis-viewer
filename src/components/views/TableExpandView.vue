@@ -3,7 +3,7 @@
     <div v-if="this.record.type != 'hash'" style="display: flex; flex-flow: row nowrap;">
       <div style="flex-grow: 1; margin-left: 10px;">
         <template v-if="!isLoading">
-          <vue-json-pretty :deep="'1'" :show-line="false" :data="value.data"/>
+          <vue-json-pretty :deep="1" :show-line="false" :data="value.data"/>
         </template>
 
         <span v-else style="color: #aaa">
