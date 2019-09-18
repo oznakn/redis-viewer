@@ -42,7 +42,7 @@ export default new Vuex.Store({
       return getters.workspace.userType;
     },
     isSettingsFilled(state, getters) {
-      return Boolean(getters.accessKey);
+      return getters.accessKey !== '';
     },
     hasFullAccess(state, getters) {
       return getters.userType === 1;

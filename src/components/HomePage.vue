@@ -141,6 +141,7 @@ export default {
         clearInterval(this.statsInterval);
       }
 
+      this.$eventBus.$emit('closeModals');
       this.statsInterval = setInterval(() => this.fetchRedisStats(), 60000);
       this.refreshData();
     },

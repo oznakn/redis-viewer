@@ -53,8 +53,6 @@ export default {
     window.addEventListener('keydown', this.onKeyDown);
   },
   beforeDestroy() {
-    this.$eventBus.$off('changeDBView', this.changeDBView);
-
     window.removeEventListener('keydown', this.onKeyDown);
   },
   methods: {

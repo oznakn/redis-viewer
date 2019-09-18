@@ -9,13 +9,11 @@ import store from './store';
 import socket from './socket';
 
 const options = {
-  thickness: '5px',
+  thickness: '3px',
 };
 
 Vue.use(FishUI);
 Vue.use(VueProgressBar, options);
-
-Vue.config.productionTip = false;
 
 Vue.prototype.$network = network;
 Vue.prototype.$socket = socket;
