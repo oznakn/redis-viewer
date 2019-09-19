@@ -110,6 +110,8 @@ func (c *Client) readClient() {
 
 			if err == nil {
 				c.send <- []byte(response)
+			} else {
+				fmt.Println(err)
 			}
 		}
 	}

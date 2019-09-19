@@ -152,7 +152,7 @@ export default {
   .repl {
     border: 1px solid #aaa;
 
-    height: 600px;
+    height: 400px;
 
     position: fixed;
     bottom: 10px;

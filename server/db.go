@@ -76,6 +76,26 @@ func createUser(username string, password string, userType int) bool {
 	}
 }
 
+func deleteUser(username string) bool {
+	user := User{}
+
+	return db.Unscoped().Delete(&user, "username = ?", username).Error == nil
+}
+
+func getUsers() []User {
+	users := make([]User, 0)
+
+	db.Find(&users)
+
+	return users
+}
+
+func deleteAccessKeys() bool {
+	accessKey := AccessKey{}
+
+	return db.Unscoped().Delete(&accessKey).Error == nil
+}
+
 func authUser(username string, password string) (bool, User, string) {
 	user := User{}
 

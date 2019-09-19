@@ -66,6 +66,10 @@ export default {
       type: String,
       default: '',
     },
+    enableAutoReload: {
+      type: Boolean,
+      default: true,
+    },
   },
   data() {
     return {
@@ -124,7 +128,7 @@ export default {
       this.updateDBInfo();
     },
     onUpdateDatabaseEvent({ db }) {
-      if (db === this.db.id) {
+      if (this.enableAutoReload === true && db === this.db.id) {
         this.refreshData();
       }
     },

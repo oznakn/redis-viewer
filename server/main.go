@@ -32,6 +32,8 @@ func main() {
 	viper.SetDefault("static.dir", "./dist")
 
 	app := cli.NewApp()
+	app.Name = "Redis Viewer CLI"
+	app.Usage = "Redis Viewer CLI Application"
 
 	app.Commands = []cli.Command{
 		{
@@ -101,6 +103,51 @@ func main() {
 					fmt.Print("\nUser successfully created.\n")
 				} else {
 					fmt.Print("\nUser creation failed.\n")
+				}
+
+				return nil
+			},
+		},
+		{
+			Name:  "deleteuser",
+			Usage: "delete user",
+			Action: func(c *cli.Context) error {
+				reader := bufio.NewReader(os.Stdin)
+
+				fmt.Print("Username: ")
+				username, _ := reader.ReadString('\n')
+				username = username[:len(username)-1]
+
+				if deleteUser(username) {
+					fmt.Print("\nUser successfully deleted.\n")
+				} else {
+					fmt.Print("\nUser deletion failed.\n")
+				}
+
+				return nil
+			},
+		},
+		{
+			Name:  "listusers",
+			Usage: "list users",
+			Action: func(c *cli.Context) error {
+				users := getUsers()
+
+				for _, user := range users {
+					fmt.Printf("Username: %s\n", user.Username)
+				}
+
+				return nil
+			},
+		},
+		{
+			Name:  "flushaccesskeys",
+			Usage: "delete access keys from database",
+			Action: func(c *cli.Context) error {
+				if deleteAccessKeys() {
+					fmt.Printf("Access Keys flushed.\n")
+				} else {
+					fmt.Printf("Access Keys flush failed.\n")
 				}
 
 				return nil

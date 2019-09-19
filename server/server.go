@@ -435,23 +435,41 @@ func sendCommand(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func getRedisStats(w http.ResponseWriter, r *http.Request) {
-	client := clients[0]
+func startSocketInterval() {
+	ticker := time.NewTicker(3 * time.Second)
+	quit := make(chan struct{})
 
-	info, err := client.Info().Result()
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				client := clients[0]
 
-	if err != nil {
-		writeError(w, err, 500)
-	} else {
-		response := make(map[string]interface{})
+				info, err := client.Info().Result()
 
-		response["result"] = parseInfoData(info)
+				data := make(map[string]interface{})
+				data["stats"] = true
+				data["result"] = parseInfoData(info)
+				data["time"] = time.Now()
 
-		writeResponse(w, response)
-	}
+				response, err := json.Marshal(data)
+
+				if err == nil {
+					hub.broadcast <- []byte(response)
+				} else {
+					fmt.Println(err)
+				}
+			case <-quit:
+				ticker.Stop()
+				return
+			}
+		}
+	}()
 }
 
 func startServer(enableRedisProxy bool, enableStaticServe bool) {
+	clients[0] = createClient(0)
+
 	publish := fmt.Sprintf("%s:%d", viper.Get("publish.host").(string), viper.Get("publish.port").(int))
 	connect := fmt.Sprintf("%s:%d", viper.Get("redis.connect.host").(string), viper.Get("redis.connect.port").(int))
 	staticDir, _ := filepath.Abs(viper.Get("static.dir").(string))
@@ -463,6 +481,8 @@ func startServer(enableRedisProxy bool, enableStaticServe bool) {
 	r := mux.NewRouter()
 
 	if enableRedisProxy {
+		startSocketInterval()
+
 		s := r.PathPrefix("/api").Subrouter()
 
 		s.Use(parseBodyMiddleware)
@@ -479,7 +499,6 @@ func startServer(enableRedisProxy bool, enableStaticServe bool) {
 		q.HandleFunc("/search", searchKey).Methods(http.MethodGet)
 		q.HandleFunc("/key", keyIndex).Methods(http.MethodGet, http.MethodPost, http.MethodDelete)
 		q.HandleFunc("/command", sendCommand).Methods(http.MethodPost)
-		q.HandleFunc("/stats", getRedisStats).Methods(http.MethodGet)
 
 		fmt.Printf("Server started on %s using redis on %s\n", publish, connect)
 	}

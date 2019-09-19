@@ -25,6 +25,10 @@
             <span>{{ isSocketConnected ? 'Socket connected' : 'Socket not connected' }}</span>
           </div>
 
+          <div>
+            <fish-switch v-model="enableAutoReload">AutoReload</fish-switch>
+          </div>
+
           <div class="stats">
             <span v-show="stats.memory">Memory: {{ stats.memory }}</span>
             <span v-show="stats.cpu">CPU: {{ stats.cpu }}</span>
@@ -48,7 +52,7 @@
       </div>
 
       <div v-if="currentDB">
-        <database-view :db="currentDB" :key="`db-view-${currentDB['id']}`" />
+        <database-view :db="currentDB" :enableAutoReload="enableAutoReload" :key="`db-view-${currentDB['id']}`" />
         <hash-search-view :key="`hash-view-${currentDB['id']}`" />
         <repl-view :key="`repl-view-${currentDB['id']}`" />
       </div>
@@ -78,8 +82,8 @@ export default {
   data() {
     return {
       isSocketConnected: this.$socket.isConnected,
+      enableAutoReload: true,
       currentDB: undefined,
-      statsInterval: undefined,
     };
   },
   created() {
@@ -87,13 +91,14 @@ export default {
     this.$eventBus.$on('refreshSystem', this.refreshSystem);
 
     this.refreshSystem();
+    this.$socket.update();
   },
   beforeDestroy() {
     this.$eventBus.$off('socketStatusChanged', this.onSocketStatusChanged);
     this.$eventBus.$off('refreshSystem', this.refreshSystem);
   },
   methods: {
-    ...mapMutations(['setDBs', 'setStats', 'resetWorkspace']),
+    ...mapMutations(['setDBs', 'resetWorkspace']),
     onDBChange(dbIndex) {
       this.$refs.menu.$children.forEach((child) => {
         child.active = false;
@@ -104,10 +109,6 @@ export default {
     },
     onSocketStatusChanged({ isConnected }) {
       this.isSocketConnected = isConnected;
-    },
-    fetchRedisStats() {
-      this.$network.getRedisStats()
-        .then((response) => this.setStats(response.result));
     },
     updateDBs() {
       this.$network.getDBs()
@@ -135,7 +136,6 @@ export default {
     },
     refreshData() {
       this.updateDBs();
-      this.fetchRedisStats();
     },
     refreshSystem() {
       if (!this.isSettingsFilled) {
@@ -148,7 +148,6 @@ export default {
         this.$eventBus.$emit('closeModals');
         this.$socket.update();
 
-        this.statsInterval = setInterval(() => this.fetchRedisStats(), 60000);
         this.refreshData();
       }
     },
@@ -197,12 +196,14 @@ export default {
       display: flex;
       flex-flow: row nowrap;
 
-      .stats {
-        margin: 0 14px;
+      &>* {
         display: flex;
         flex-flow: row nowrap;
         align-items: center;
+        margin: 0 14px;
+      }
 
+      .stats {
         &>span {
           margin: 0 7px;
         }
@@ -211,14 +212,8 @@ export default {
       .socket-status {
         padding: 10px;
 
-        margin-left: 20px;
-
         font-size: 1.2rem;
         color: red;
-
-        display: flex;
-        flex-flow: row nowrap;
-        align-items: center;
 
         &.active {
           color: green;
@@ -227,8 +222,6 @@ export default {
 
       .buttons {
         margin-left: auto;
-        display: flex;
-        flex-flow: row nowrap;
 
         &>div {
           font-size: 1.2rem;

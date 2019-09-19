@@ -125,10 +125,4 @@ export default class Network {
       })
       .then(this.axiosResponseHandler);
   }
-
-  static getRedisStats() {
-    return this.conn
-      .get('/stats')
-      .then(this.axiosResponseHandler);
-  }
 }

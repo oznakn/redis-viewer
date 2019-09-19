@@ -11,7 +11,7 @@ export default class Socket {
   }
 
   static update() {
-    if (this.isConnected === false && this.$root.$store.getters.serverURL) {
+    if (this.isConnected === false && this.$root.$store.getters.serverURL.length > 0) {
       this.conn = new WebSocket(`ws://${this.$root.$store.getters.serverURL}/ws`);
 
       this.conn.onclose = this.conn.onerror = () => { // eslint-disable-line
@@ -19,13 +19,15 @@ export default class Socket {
         this.emitSocketStatus();
 
         this.conn = undefined;
-        this.update();
       };
 
       this.conn.onmessage = (e) => {
         const data = JSON.parse(e.data);
 
-        if (data.pong === true) {
+        if (data.stats === true) {
+          console.log(data.result);
+          this.$root.$store.commit('setStats', data.result);
+        } else if (data.pong === true) {
           this.isConnected = true;
           this.emitSocketStatus();
         } else {
@@ -38,6 +40,10 @@ export default class Socket {
       };
     } else if (this.isConnected === true) {
       this.conn.close();
+
+      setTimeout(() => {
+        this.update();
+      }, 400);
     }
   }
 
