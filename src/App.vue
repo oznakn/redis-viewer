@@ -8,10 +8,11 @@
           default-active="0"
           mode="inline"
           @change="onWorkspaceChange"
+          ref="workspaceMenu"
           style="width: 120px">
 
           <fish-option
-            v-for="i in (workspaces.length) "
+            v-for="i in (workspaces.length + 1) "
             :index="i-1"
             :key="`workspace-${i}`"
             :content="`Workspace ${i}`"/>
@@ -63,6 +64,11 @@ export default {
       }
     },
     onWorkspaceChange(workspace) {
+      this.$refs.workspaceMenu.$children.forEach((child) => {
+        child.active = false;
+      });
+      this.$refs.workspaceMenu.setActive(workspace);
+
       this.setWorkspace(workspace);
     },
   },

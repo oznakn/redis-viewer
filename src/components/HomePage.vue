@@ -1,53 +1,62 @@
 <template>
   <div>
-    <div class="header">
-      <div class="db-select-view" :class="{'scroll': dbs.length > 6 }">
-        <span>DB: </span>
+    <template v-if="isSettingsFilled">
+      <div class="header">
+        <div class="db-select-view" :class="{'scroll': dbs.length > 6 }">
+          <span>DB: </span>
 
-        <fish-menu
-          mode="horizontal"
-          size="large"
-          @change="onDBChange"
-          default-active="0"
-          ref="menu">
+          <fish-menu
+            mode="horizontal"
+            size="large"
+            @change="onDBChange"
+            default-active="0"
+            ref="menu">
 
-          <fish-option
-            v-for="(db, index) in dbs"
-            :index="`${index}`"
-            :content="db['name']"
-            :key="db['id']" />
-        </fish-menu>
+            <fish-option
+              v-for="(db, index) in dbs"
+              :index="index"
+              :content="db['name']"
+              :key="db['id']" />
+          </fish-menu>
+        </div>
+
+        <div class="nav-right">
+          <div class="socket-status" :class="{active: isSocketConnected}">
+            <span>{{ isSocketConnected ? 'Socket connected' : 'Socket not connected' }}</span>
+          </div>
+
+          <div class="stats">
+            <span v-show="stats.memory">Memory: {{ stats.memory }}</span>
+            <span v-show="stats.cpu">CPU: {{ stats.cpu }}</span>
+          </div>
+
+          <div class="buttons">
+            <div @click="openInfoModal">
+              <i class="fas fa-info"></i>
+            </div>
+            <div @click="refreshData">
+              <i class="fas fa-sync"></i>
+            </div>
+            <div @click="openSettingsModal">
+              <i class="fas fa-cog"></i>
+            </div>
+            <div @click="logout">
+              <i class="fas fa-sign-out-alt"></i>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div class="nav-right">
-        <div class="socket-status" :class="{active: isSocketConnected}">
-          <span>{{ isSocketConnected ? 'Socket connected' : 'Socket not connected' }}</span>
-        </div>
-
-        <div class="stats">
-          <span v-show="stats.memory">Memory: {{ stats.memory }}</span>
-          <span v-show="stats.cpu">CPU: {{ stats.cpu }}</span>
-        </div>
-
-        <div class="buttons">
-          <div @click="openInfoModal">
-            <i class="fas fa-info"></i>
-          </div>
-          <div @click="refreshData">
-            <i class="fas fa-sync"></i>
-          </div>
-          <div @click="openSettingsModal">
-            <i class="fa fa-cog"></i>
-          </div>
-        </div>
+      <div v-if="currentDB">
+        <database-view :db="currentDB" :key="`db-view-${currentDB['id']}`" />
+        <hash-search-view :key="`hash-view-${currentDB['id']}`" />
+        <repl-view :key="`repl-view-${currentDB['id']}`" />
       </div>
-    </div>
+    </template>
 
-    <div v-if="currentDB">
-      <database-view :db="currentDB" :key="`db-view-${currentDB['id']}`" />
-      <hash-search-view :key="`hash-view-${currentDB['id']}`" />
-      <repl-view :key="`repl-view-${currentDB['id']}`" />
-    </div>
+    <template v-else>
+      <settings-view style="margin-top: 50px;"/>
+    </template>
   </div>
 </template>
 
@@ -57,11 +66,13 @@ import { mapState, mapGetters, mapMutations } from 'vuex';
 import DatabaseView from './views/DatabaseView.vue';
 import HashSearchView from './views/HashSearchView.vue';
 import REPLView from './views/REPLView.vue';
+import SettingsView from './views/SettingsView.vue';
 
 export default {
   components: {
     DatabaseView,
     HashSearchView,
+    SettingsView,
     replView: REPLView,
   },
   data() {
@@ -72,34 +83,24 @@ export default {
     };
   },
   created() {
-    this.$socket.update();
-
     this.$eventBus.$on('socketStatusChanged', this.onSocketStatusChanged);
-    this.$eventBus.$on('changeDBView', this.changeDBView);
     this.$eventBus.$on('refreshSystem', this.refreshSystem);
 
-    if (!this.isSettingsFilled) {
-      this.$Progress.finish();
-
-      this.openSettingsModal();
-    } else {
-      this.refreshSystem();
-    }
+    this.refreshSystem();
   },
   beforeDestroy() {
     this.$eventBus.$off('socketStatusChanged', this.onSocketStatusChanged);
-    this.$eventBus.$off('changeDBView', this.changeDBView);
     this.$eventBus.$off('refreshSystem', this.refreshSystem);
   },
   methods: {
-    ...mapMutations(['setDBs', 'setStats']),
+    ...mapMutations(['setDBs', 'setStats', 'resetWorkspace']),
     onDBChange(dbIndex) {
       this.$refs.menu.$children.forEach((child) => {
         child.active = false;
       });
       this.$refs.menu.setActive(dbIndex);
 
-      this.$eventBus.$emit('changeDBView', { db: this.dbs[dbIndex] });
+      this.setCurrentDB({ db: this.dbs[dbIndex] });
     },
     onSocketStatusChanged({ isConnected }) {
       this.isSocketConnected = isConnected;
@@ -114,7 +115,7 @@ export default {
           this.setDBs(results);
 
           if (this.dbs.length > 0) {
-            this.$eventBus.$emit('changeDBView', { db: this.dbs[0] });
+            this.setCurrentDB({ db: this.dbs[0] });
           }
         })
         .catch(() => {
@@ -123,7 +124,7 @@ export default {
           }
         });
     },
-    changeDBView({ db }) {
+    setCurrentDB({ db }) {
       this.currentDB = db;
     },
     openSettingsModal() {
@@ -137,13 +138,23 @@ export default {
       this.fetchRedisStats();
     },
     refreshSystem() {
-      if (this.statsInterval !== undefined) {
-        clearInterval(this.statsInterval);
-      }
+      if (!this.isSettingsFilled) {
+        this.$Progress.finish();
+      } else {
+        if (this.statsInterval !== undefined) {
+          clearInterval(this.statsInterval);
+        }
 
-      this.$eventBus.$emit('closeModals');
-      this.statsInterval = setInterval(() => this.fetchRedisStats(), 60000);
-      this.refreshData();
+        this.$eventBus.$emit('closeModals');
+        this.$socket.update();
+
+        this.statsInterval = setInterval(() => this.fetchRedisStats(), 60000);
+        this.refreshData();
+      }
+    },
+    logout() {
+      this.resetWorkspace();
+      this.refreshSystem();
     },
   },
   computed: {

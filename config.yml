@@ -1,3 +1,10 @@
-publish: 
+static:
+  dir: "./dist"
+publish:
+  host: 127.0.0.1
   port: 7000
-static_dir: "./dist"
+redis:
+  pass: ""
+  connect:
+    host: 127.0.0.1
+    port: 6379

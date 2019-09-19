@@ -11,9 +11,7 @@ export default class Socket {
   }
 
   static update() {
-    this.isConnected = false;
-
-    if (this.conn === undefined && this.$root.$store.getters.serverURL) {
+    if (this.isConnected === false && this.$root.$store.getters.serverURL) {
       this.conn = new WebSocket(`ws://${this.$root.$store.getters.serverURL}/ws`);
 
       this.conn.onclose = this.conn.onerror = () => { // eslint-disable-line
@@ -38,7 +36,7 @@ export default class Socket {
       this.conn.onopen = () => {
         this.conn.send('ping');
       };
-    } else if (this.conn !== undefined) {
+    } else if (this.isConnected === true) {
       this.conn.close();
     }
   }

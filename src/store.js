@@ -50,32 +50,34 @@ export default new Vuex.Store({
   },
   mutations: {
     setServerURL(state, serverURL) {
-      state.workspaces[state.selectedWorkspace].serverURL = serverURL;
+      Vue.set(state.workspaces[state.selectedWorkspace], 'serverURL', serverURL);
     },
     setAccessKey(state, accessKey) {
-      state.workspaces[state.selectedWorkspace].accessKey = accessKey;
+      Vue.set(state.workspaces[state.selectedWorkspace], 'accessKey', accessKey);
     },
     setDBs(state, dbs) {
-      state.workspaces[state.selectedWorkspace].dbs = dbs;
+      Vue.set(state.workspaces[state.selectedWorkspace], 'dbs', dbs);
     },
     setStats(state, stats) {
-      state.workspaces[state.selectedWorkspace].stats = stats;
+      Vue.set(state.workspaces[state.selectedWorkspace], 'stats', stats);
     },
     setUserType(state, userType) {
-      state.workspaces[state.selectedWorkspace].userType = userType;
+      Vue.set(state.workspaces[state.selectedWorkspace], 'userType', userType);
     },
     resetWorkspace(state) {
-      state.workspaces[state.selectedWorkspace] = getDefaultWorkspaceState();
+      Vue.set(state.workspaces, state.selectedWorkspace, getDefaultWorkspaceState());
     },
     setWorkspace(state, workspace) {
       while (state.workspaces.length <= workspace) {
         state.workspaces.push(getDefaultWorkspaceState());
       }
 
-      for (let i = 0; i < state.workspaces.length; i += 1) {
-        if (i !== workspace) {
-          state.workspaces[i].dbs = [];
-          state.workspaces[i].stats = {};
+      Vue.set(state.workspaces[state.selectedWorkspace], 'dbs', []);
+      Vue.set(state.workspaces[state.selectedWorkspace], 'stats', {});
+
+      for (let i = state.workspaces.length - 1; i > workspace; i -= 1) {
+        if (state.workspaces[i].accessKey === '') {
+          state.workspaces.splice(i, 1);
         }
       }
 

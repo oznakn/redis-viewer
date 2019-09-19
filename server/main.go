@@ -29,7 +29,7 @@ func main() {
 	viper.SetDefault("redis.connect.host", "127.0.0.1")
 	viper.SetDefault("redis.connect.port", 6379)
 	viper.SetDefault("redis.pass", "")
-	viper.SetDefault("static_dir", "./dist")
+	viper.SetDefault("static.dir", "./dist")
 
 	app := cli.NewApp()
 
@@ -44,7 +44,31 @@ func main() {
 				go hub.run()
 				go listenRedisEvents()
 
-				startServer()
+				startServer(true, false)
+
+				return nil
+			},
+		},
+		{
+			Name:  "startandserve",
+			Usage: "start redis proxy server, also serve web interface",
+			Action: func(c *cli.Context) error {
+				redisInit()
+				websocketInit()
+
+				go hub.run()
+				go listenRedisEvents()
+
+				startServer(true, true)
+
+				return nil
+			},
+		},
+		{
+			Name:  "serve",
+			Usage: "just serve web interface",
+			Action: func(c *cli.Context) error {
+				startServer(false, true)
 
 				return nil
 			},

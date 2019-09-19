@@ -451,46 +451,49 @@ func getRedisStats(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func startServer() {
+func startServer(enableRedisProxy bool, enableStaticServe bool) {
 	publish := fmt.Sprintf("%s:%d", viper.Get("publish.host").(string), viper.Get("publish.port").(int))
 	connect := fmt.Sprintf("%s:%d", viper.Get("redis.connect.host").(string), viper.Get("redis.connect.port").(int))
-	staticDir, err := filepath.Abs(viper.Get("static_dir").(string))
+	staticDir, _ := filepath.Abs(viper.Get("static.dir").(string))
 
-	if err != nil {
-		log.Fatal(err)
+	if viper.Get("redis.pass").(string) != "" {
+		fmt.Printf("Authenticating redis using password\n")
 	}
-
-	fileServer := http.FileServer(http.Dir(fmt.Sprintf("%s/", staticDir)))
 
 	r := mux.NewRouter()
 
-	s := r.PathPrefix("/api").Subrouter()
+	if enableRedisProxy {
+		s := r.PathPrefix("/api").Subrouter()
 
-	s.Use(parseBodyMiddleware)
-	s.HandleFunc("/login", login).Methods(http.MethodPost)
-	s.HandleFunc("/ws", serveWs).Methods(http.MethodGet, http.MethodPost)
+		s.Use(parseBodyMiddleware)
+		s.HandleFunc("/login", login).Methods(http.MethodPost)
+		s.HandleFunc("/ws", serveWs).Methods(http.MethodGet, http.MethodPost)
 
-	q := s.PathPrefix("/").Subrouter()
+		q := s.PathPrefix("/").Subrouter()
 
-	q.Use(authenticationMiddleware)
-	q.Use(createRedisClientMiddleware)
-	q.HandleFunc("/", index).Methods(http.MethodGet)
-	q.HandleFunc("/dbs", getDBs).Methods(http.MethodGet)
-	q.HandleFunc("/dbsize", getDBSize).Methods(http.MethodGet)
-	q.HandleFunc("/search", searchKey).Methods(http.MethodGet)
-	q.HandleFunc("/key", keyIndex).Methods(http.MethodGet, http.MethodPost, http.MethodDelete)
-	q.HandleFunc("/command", sendCommand).Methods(http.MethodPost)
-	q.HandleFunc("/stats", getRedisStats).Methods(http.MethodGet)
+		q.Use(authenticationMiddleware)
+		q.Use(createRedisClientMiddleware)
+		q.HandleFunc("/", index).Methods(http.MethodGet)
+		q.HandleFunc("/dbs", getDBs).Methods(http.MethodGet)
+		q.HandleFunc("/dbsize", getDBSize).Methods(http.MethodGet)
+		q.HandleFunc("/search", searchKey).Methods(http.MethodGet)
+		q.HandleFunc("/key", keyIndex).Methods(http.MethodGet, http.MethodPost, http.MethodDelete)
+		q.HandleFunc("/command", sendCommand).Methods(http.MethodPost)
+		q.HandleFunc("/stats", getRedisStats).Methods(http.MethodGet)
 
-	r.PathPrefix("/css").Handler(fileServer)
-	r.PathPrefix("/js").Handler(fileServer)
-	r.PathPrefix("/").HandlerFunc(indexHandler(fmt.Sprintf("%s/index.html", staticDir)))
-
-	if viper.Get("redis.pass").(string) != "" {
-		fmt.Printf("authenticating redis using password\n")
+		fmt.Printf("Server started on %s using redis on %s\n", publish, connect)
 	}
 
-	fmt.Printf("Server started on %s using redis on %s\n", publish, connect)
+	if enableStaticServe {
+		fileServer := http.FileServer(http.Dir(fmt.Sprintf("%s/", staticDir)))
+
+		r.PathPrefix("/css").Handler(fileServer)
+		r.PathPrefix("/js").Handler(fileServer)
+		r.PathPrefix("/").HandlerFunc(indexHandler(fmt.Sprintf("%s/index.html", staticDir)))
+
+		fmt.Printf("Serving files for web interface at %s\n", staticDir)
+	}
+
 	fmt.Print("\n")
 
 	c := cors.New(cors.Options{
