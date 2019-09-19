@@ -91,7 +91,6 @@ export default {
     this.$eventBus.$on('refreshSystem', this.refreshSystem);
 
     this.refreshSystem();
-    this.$socket.update();
   },
   beforeDestroy() {
     this.$eventBus.$off('socketStatusChanged', this.onSocketStatusChanged);

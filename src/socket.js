@@ -25,7 +25,6 @@ export default class Socket {
         const data = JSON.parse(e.data);
 
         if (data.stats === true) {
-          console.log(data.result);
           this.$root.$store.commit('setStats', data.result);
         } else if (data.pong === true) {
           this.isConnected = true;
